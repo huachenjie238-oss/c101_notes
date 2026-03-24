@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clay 功能深度解析</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #0e0f11;
+    --bg2: #161820;
+    --bg3: #1e2028;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8e6e1;
+    --muted: #8a8680;
+    --dim: #555250;
+    --find: #3b7dd8;
+    --find-dim: rgba(59,125,216,0.12);
+    --enrich: #2da882;
+    --enrich-dim: rgba(45,168,130,0.12);
+    --transform: #d4873a;
+    --transform-dim: rgba(212,135,58,0.12);
+    --export: #9b6dd6;
+    --export-dim: rgba(155,109,214,0.12);
+    --infra: #5a8a9f;
+    --infra-dim: rgba(90,138,159,0.12);
+    --accent: #e8e6e1;
+    --tag-bg: rgba(255,255,255,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* Header */
+  .hero {
+    padding: 72px 40px 48px;
+    max-width: 900px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .hero h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 42px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 600px;
+    line-height: 1.8;
+  }
+
+  /* FETE bar */
+  .fete-bar {
+    display: flex;
+    gap: 2px;
+    max-width: 900px;
+    margin: 32px auto;
+    padding: 0 40px;
+  }
+
+  .fete-item {
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+  }
+
+  .fete-item.find { background: var(--find-dim); color: var(--find); border-color: rgba(59,125,216,0.2); }
+  .fete-item.enrich { background: var(--enrich-dim); color: var(--enrich); border-color: rgba(45,168,130,0.2); }
+  .fete-item.transform { background: var(--transform-dim); color: var(--transform); border-color: rgba(212,135,58,0.2); }
+  .fete-item.export { background: var(--export-dim); color: var(--export); border-color: rgba(155,109,214,0.2); }
+  .fete-item.infra { background: var(--infra-dim); color: var(--infra); border-color: rgba(90,138,159,0.2); }
+
+  .fete-item:hover { transform: translateY(-2px); filter: brightness(1.2); }
+
+  .fete-item .fete-letter { font-size: 22px; font-weight: 700; display: block; margin-bottom: 2px; }
+  .fete-item .fete-name { font-size: 11px; opacity: 0.8; }
+
+  /* Main layout */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  /* Section */
+  .section {
+    margin-top: 60px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .section-header h2 {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .section-header .section-meta {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Feature card */
+  .feature-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .feature-card:hover { border-color: var(--border2); }
+
+  .feature-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 22px 24px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .feature-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .feature-title-group { flex: 1; }
+
+  .feature-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .feature-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .feature-arrow {
+    color: var(--dim);
+    font-size: 18px;
+    transition: transform 0.25s;
+    margin-top: 8px;
+    flex-shrink: 0;
+  }
+
+  .feature-card.open .feature-arrow { transform: rotate(90deg); }
+
+  .feature-body {
+    display: none;
+    padding: 0 24px 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 0;
+  }
+
+  .feature-card.open .feature-body { display: block; }
+
+  /* Body sections */
+  .body-section { margin-top: 20px; }
+
+  .body-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .body-text {
+    font-size: 14px;
+    color: #c0bdb8;
+    line-height: 1.85;
+  }
+
+  /* How it works steps */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    background: var(--bg3);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-text { font-size: 13.5px; color: #b0ada8; line-height: 1.7; }
+  .step-text strong { color: var(--text); font-weight: 500; }
+
+  /* Use case */
+  .usecase {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 4px;
+  }
+
+  .usecase-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .usecase-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 400;
+  }
+
+  .usecase-body { font-size: 13px; color: #9a9690; line-height: 1.75; }
+  .usecase-body strong { color: #c0bdb8; font-weight: 500; }
+
+  /* Tips */
+  .tip {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .tip.warn {
+    background: rgba(212,135,58,0.08);
+    border: 1px solid rgba(212,135,58,0.2);
+    color: #c49050;
+  }
+
+  .tip.info {
+    background: rgba(59,125,216,0.08);
+    border: 1px solid rgba(59,125,216,0.2);
+    color: #6fa0e0;
+  }
+
+  .tip.good {
+    background: rgba(45,168,130,0.08);
+    border: 1px solid rgba(45,168,130,0.2);
+    color: #4abf9a;
+  }
+
+  .tip-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Tags row */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+
+  .tag {
+    font-size: 11.5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* Quote / example email */
+  .email-example {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #b8b5b0;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  .email-example em { color: var(--find); font-style: normal; }
+  .email-example em.g { color: var(--enrich); }
+  .email-example em.t { color: var(--transform); }
+
+  /* Comparison table */
+  .compare-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+  .compare-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+  .compare-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    color: #b0ada8;
+    vertical-align: top;
+  }
+  .compare-table td:first-child { color: var(--text); font-weight: 500; }
+  .compare-table tr:last-child td { border-bottom: none; }
+
+  /* Waterfall visual */
+  .waterfall-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .wf-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 7px;
+    font-size: 13px;
+  }
+  .wf-row.found { background: rgba(45,168,130,0.1); border: 1px solid rgba(45,168,130,0.2); }
+  .wf-row.pass  { background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
+  .wf-provider { color: var(--text); font-weight: 500; min-width: 120px; }
+  .wf-cost { color: var(--muted); font-size: 11.5px; min-width: 60px; }
+  .wf-result { margin-left: auto; font-size: 12px; }
+  .wf-row.found .wf-result { color: var(--enrich); }
+  .wf-row.pass .wf-result  { color: var(--muted); }
+
+  /* SPICE display */
+  .spice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .spice-item {
+    padding: 14px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .spice-letter { font-size: 22px; font-weight: 700; color: var(--transform); margin-bottom: 4px; font-family: 'Noto Serif SC', serif; }
+  .spice-word { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .spice-desc { font-size: 13px; color: #a0a09a; line-height: 1.6; }
+
+  /* Scoring table */
+  .score-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .score-table th { font-size: 11px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .score-table td { padding: 9px 10px; font-size: 13px; border-bottom: 1px solid var(--border); color: #b0ada8; }
+  .score-table td:first-child { color: var(--text); }
+  .score-table tr:last-child td { border-bottom: none; }
+  .score-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .score-high { background: rgba(45,168,130,0.15); color: var(--enrich); }
+  .score-mid  { background: rgba(212,135,58,0.15); color: var(--transform); }
+  .score-low  { background: rgba(255,255,255,0.06); color: var(--muted); }
+
+  /* Two-step CRM */
+  .two-step { display: flex; gap: 8px; margin-top: 8px; }
+  .two-step-box {
+    flex: 1;
+    padding: 14px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .two-step-box .step-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .two-step-box .step-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .two-step-box .step-body { font-size: 13px; color: #9a9690; line-height: 1.65; }
+  .two-step-arrow { display: flex; align-items: center; color: var(--muted); font-size: 20px; margin-top: 10px; }
+
+  /* Footer */
+  .doc-footer {
+    max-width: 900px;
+    margin: 60px auto 0;
+    padding: 24px 40px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--dim);
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label">产品功能深度解析 · 面向零基础用户</div>
+  <h1>Clay 完整功能手册</h1>
+  <p>Clay 是一个 B2B 自动化获客平台。把它想象成一张超级表格——它不只能存数据，还能自动联网抓数据、用 AI 处理数据、再把结果推送到你用的所有销售工具里。本文将拆解每一个功能，并附上真实使用场景。</p>
+</div>
+
+<div class="fete-bar">
+  <div class="fete-item find" onclick="scrollTo('find')">
+    <span class="fete-letter">F</span>
+    <span class="fete-name">Find · 找人找公司</span>
+  </div>
+  <div class="fete-item enrich" onclick="scrollTo('enrich')">
+    <span class="fete-letter">E</span>
+    <span class="fete-name">Enrich · 数据增强</span>
+  </div>
+  <div class="fete-item transform" onclick="scrollTo('transform')">
+    <span class="fete-letter">T</span>
+    <span class="fete-name">Transform · AI处理</span>
+  </div>
+  <div class="fete-item export" onclick="scrollTo('export')">
+    <span class="fete-letter">E</span>
+    <span class="fete-name">Export · 推送输出</span>
+  </div>
+  <div class="fete-item infra" onclick="scrollTo('infra')">
+    <span class="fete-letter">+</span>
+    <span class="fete-name">基础设施</span>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ==================== FIND ==================== -->
+<div class="section" id="find">
+  <div class="section-header">
+    <div class="section-dot" style="background:var(--find)"></div>
+    <h2>F · Find — 找人找公司</h2>
+    <span class="section-meta">6 个功能</span>
+  </div>
+
+  <!-- F1: Find Companies -->
+  <div class="feature-card" id="f1">
+    <div class="feature-header" onclick="toggle('f1')">
+      <div class="feature-icon" style="background:var(--find-dim)">🏢</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Find Companies · 批量找目标公司</div>
+        <div class="feature-subtitle">按行业、规模、地区等条件，直接从 Clay 内置数据库拉取公司名单</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么</div>
+        <div class="body-text">就像在网上搜公司，但比搜索引擎精准 100 倍。你设定条件，Clay 自动帮你找出所有符合要求的公司，直接放进你的表格里，不需要手动复制粘贴。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">可以过滤的条件</div>
+        <div class="tags">
+          <span class="tag">行业 Industry</span>
+          <span class="tag">员工人数 Headcount</span>
+          <span class="tag">所在城市 / 国家</span>
+          <span class="tag">公司技术栈（用了什么软件）</span>
+          <span class="tag">融资情况</span>
+          <span class="tag">成立年份</span>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">操作步骤</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">1</div>
+            <div class="step-text">新建一个 <strong>Workbook</strong>（工作簿），然后在里面新建一张 Table（表格）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">2</div>
+            <div class="step-text">选择数据源为 <strong>Find Companies</strong></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">3</div>
+            <div class="step-text">依次填写你的条件：行业选 <strong>Software Development</strong>，人数选 <strong>500+</strong>，地区选 <strong>New York</strong></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">4</div>
+            <div class="step-text">点击 Preview 预览结果数量（比如 162 家），满意后点击 <strong>Import</strong> 导入</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">5</div>
+            <div class="step-text">⚠️ 导入时弹出的 Enrichment 选项<strong>全部不勾选</strong>，直接以基础数据导入（基础导入免费）</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：卖 B2B SaaS 的销售代表
+            <span class="usecase-tag" style="background:var(--find-dim);color:var(--find)">SDR / BDR</span>
+          </div>
+          <div class="usecase-body">你卖的是一款帮销售团队管理客户数据的软件，目标客户是<strong>纽约的中大型软件公司</strong>。你设定：行业 = Software Development，人数 = 500+，城市 = New York。30秒后，Clay 给你拉出 162 家公司的名单，每家都有公司名、官网域名、LinkedIn 链接。这就是你这个月要攻下的目标池。</div>
+        </div>
+      </div>
+      <div class="tip warn">
+        <span class="tip-icon">⚠</span>
+        <span>导入时 Clay 会问你要不要自动抓取额外数据（技术栈、新闻等），新手<strong>不要勾选</strong>，这会迅速消耗你的试用积分。先把基础名单拿下来，后面再一步步丰富。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- F2: Find People -->
+  <div class="feature-card" id="f2">
+    <div class="feature-header" onclick="toggle('f2')">
+      <div class="feature-icon" style="background:var(--find-dim)">👤</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Find People · 找公司里的具体决策人</div>
+        <div class="feature-subtitle">基于公司名单，找出每家公司里你想联系的人</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么</div>
+        <div class="body-text">你已经有了一批目标公司，但公司不会回你邮件——得找到具体的人。这个功能就像 LinkedIn 高级搜索，但批量对所有目标公司同时执行，找出每家公司里符合条件的决策人。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">可以过滤的条件</div>
+        <div class="tags">
+          <span class="tag">职位名称关键词（VP / Director / Head）</span>
+          <span class="tag">级别 Seniority</span>
+          <span class="tag">所在城市</span>
+          <span class="tag">在当前职位任职时长</span>
+          <span class="tag">LinkedIn 简介关键词</span>
+          <span class="tag">持有 HubSpot / Salesforce 认证</span>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">操作步骤</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">1</div>
+            <div class="step-text">在公司表格右上角点击 <strong>Actions → Find People at these companies</strong></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">2</div>
+            <div class="step-text">填写职位关键词：比如 <strong>Revenue、GTM、Sales、Marketing</strong></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">3</div>
+            <div class="step-text">勾选级别：只找 <strong>VP、Director、Head</strong>（C-suite 也可加上）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">4</div>
+            <div class="step-text">预览人数（如 753 人），点击 <strong>Continue for free</strong> 导入基础名单</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">重要机制：两张表自动绑定</div>
+        <div class="body-text" style="margin-bottom:10px">Find People 会自动生成一张新的"人员表"，这张表和你的"公司表"天然关联。如果你后来在公司表里查了新数据（比如该公司用什么技术栈），人员表里点一下刷新，每个人的档案里自动出现这个新数据——不需要做任何 Excel 里的 VLOOKUP。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：找 162 家公司的销售高管
+            <span class="usecase-tag" style="background:var(--find-dim);color:var(--find)">OutBound 获客</span>
+          </div>
+          <div class="usecase-body">你从 162 家纽约软件公司的名单出发，设定条件：职位含 Sales / Revenue，级别是 VP 或 Director 以上，地区在纽约。Clay 在这 162 家公司里挖出了 <strong>753 个</strong>符合条件的人，每人都有姓名、职位、公司、LinkedIn 链接。这就是你的触达对象名单。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- F3: Google Maps -->
+  <div class="feature-card" id="f3">
+    <div class="feature-header" onclick="toggle('f3')">
+      <div class="feature-icon" style="background:var(--find-dim)">📍</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Google Maps 本地商家搜索</div>
+        <div class="feature-subtitle">专门针对线下实体店、本地服务商，不靠 LinkedIn</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么 / 为什么需要它</div>
+        <div class="body-text">很多行业的客户根本不在 LinkedIn 上，比如牙科诊所、水管工、餐厅、健身房。这时候 LinkedIn 搜索没用，但 Google Maps 有这些商家的完整数据。Clay 直接接了 Google Maps 的接口，你可以用地图圈定一个区域，抓出该区域里的所有目标商家。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">操作步骤</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">1</div>
+            <div class="step-text">新建表格，数据源选 <strong>Google Maps</strong></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">2</div>
+            <div class="step-text">在地图上选定位置和搜索半径（可以精细到某个街区）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">3</div>
+            <div class="step-text">选择搜索类型：推荐用 <strong>Business type search</strong>，输入 "dentists" / "plumbers" 等类别</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">4</div>
+            <div class="step-text">等待数据加载（数据会逐渐增多，别太早看），最终得到该区域所有匹配商家，含名称、地址、评分、电话、网站</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：向牙科诊所卖诊所管理软件
+            <span class="usecase-tag" style="background:var(--find-dim);color:var(--find)">本地商家获客</span>
+          </div>
+          <div class="usecase-body">你在卖一款帮诊所管理预约和患者档案的软件。在 Google Maps 里选定布鲁克林，搜索类型填 "dentists"，搜索半径设为 5km。Clay 拉出 315 家诊所，每家都有名字、地址、电话、网址、Google 评分和评论数。接着你用 Claygent（AI 爬虫）去抓每家诊所的网站，提取医生人数、开业年份、提供哪些治疗项目，用于个性化开发信。</div>
+        </div>
+      </div>
+      <div class="tip info">
+        <span class="tip-icon">ℹ</span>
+        <span>Google Maps API 每次搜索最多返回 1000 条记录。如果你的目标区域太大，分批次搜索，比如按城区分拆。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- F4: Job Signals -->
+  <div class="feature-card" id="f4">
+    <div class="feature-header" onclick="toggle('f4')">
+      <div class="feature-icon" style="background:var(--find-dim)">💼</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Find Job Signals · 用招聘信号找目标客户</div>
+        <div class="feature-subtitle">一家公司在招什么人，就暴露了他们的痛点和预算</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">为什么招聘信息是黄金信号</div>
+        <div class="body-text">公司招人 = 公司在花钱解决问题。如果你能在招聘信息里找到你的目标客户的痛点，你的开发信就有了完美的切入口。比如一家公司在大量招聘销售代表，说明他们在扩张销售团队——这时候卖给他们"销售自动化工具"，切入点就是"我看到你们在招 BDR，我们的工具能让每个 BDR 的效率翻倍"。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">两种玩法</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">玩法A</div>
+            <div class="step-text"><strong>以职位为起点找公司</strong>：新建表格，Sources → Find Jobs，搜索职位名称（如 bdr、sdr、Business Development Representative），过滤国家和类型，得到一批正在招这类人的公司，再从公司找到决策人发邮件</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">玩法B</div>
+            <div class="step-text"><strong>给已有公司名单查招聘数量</strong>：在已有的公司表格里，添加 "Find Jobs Waterfall" 集成，查每家公司目前开放了多少职位，用招聘数量做筛选条件，只联系"正在积极招人"的公司</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：卖销售自动化工具
+            <span class="usecase-tag" style="background:var(--find-dim);color:var(--find)">Intent-based 获客</span>
+          </div>
+          <div class="usecase-body">你搜索 "bdr sdr sales development representative"，地区限定美国，只看全职岗位，得到 500 个正在招 BDR 的公司。这些公司的邮件开场白写：<strong>"我注意到贵公司最近在积极招聘 BDR——我们的工具能帮你们的销售团队把每个 BDR 的触达效率提升 3 倍，同时节省 70% 的数据整理时间。"</strong> 因为有具体信号，这封邮件的回复率远高于泛泛的推销。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- F5: Company Lookalikes -->
+  <div class="feature-card" id="f5">
+    <div class="feature-header" onclick="toggle('f5')">
+      <div class="feature-icon" style="background:var(--find-dim)">🔍</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Company Lookalikes · 找相似公司</div>
+        <div class="feature-subtitle">基于你最好的现有客户，找和他们长得最像的潜在客户</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么</div>
+        <div class="body-text">你有 10 个最满意的客户，这个功能能帮你找出全球范围内和这 10 家公司最相似的公司（行业、规模、商业模式都相近）。逻辑是：买你产品的人已经证明你的产品对他有价值——那么找和他长得最像的公司，转化率也会更高。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">操作步骤</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">1</div>
+            <div class="step-text">在已有的公司表格里，添加 <strong>Ocean.io 相似公司</strong> 集成，以公司域名作为查询依据</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">2</div>
+            <div class="step-text">设置过滤条件：国家（如 United States）、规模（如 200人+）、行业（如 software）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">3</div>
+            <div class="step-text">点 Save and run，系统为每家原始公司返回 10 家相似公司（162家 → 最多 1620 条新线索）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">4</div>
+            <div class="step-text">用 <strong>Write to Table</strong> 将嵌套的数据展开到新表格，再对域名列做<strong>去重</strong>（dedup），得到干净的新名单</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：基于现有客户扩张，并写出杀手级邮件
+            <span class="usecase-tag" style="background:var(--find-dim);color:var(--find)">社会证明策略</span>
+          </div>
+          <div class="usecase-body">你有 20 个 Marketing Agency 客户，用 Lookalikes 找出 200 家类似的营销机构。给这 200 家发邮件时，你可以写：<strong>"我们帮助了和你们规模相近的 [现有客户名]，帮他们把 outbound 效率提升了 40%。我觉得你们的情况非常类似，想聊聊？"</strong> 因为提到了同行的真实案例，这种邮件的回复率是普通邮件的 2-3 倍。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- F6: CSV / CRM Import -->
+  <div class="feature-card" id="f6">
+    <div class="feature-header" onclick="toggle('f6')">
+      <div class="feature-icon" style="background:var(--find-dim)">📂</div>
+      <div class="feature-title-group">
+        <div class="feature-title">外部数据导入 · CSV / CRM</div>
+        <div class="feature-subtitle">把你已经有的名单导入 Clay，再进行数据增强</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">支持的导入方式</div>
+        <div class="tags">
+          <span class="tag">CSV / Excel 文件</span>
+          <span class="tag">HubSpot 联系人列表</span>
+          <span class="tag">Salesforce（最多2000条 / 用 List 而非 Report）</span>
+          <span class="tag">Close CRM</span>
+          <span class="tag">Webhook 实时推送</span>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">HubSpot 导入注意事项</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">1</div>
+            <div class="step-text">先在 HubSpot 里建好目标列表（比如筛选出所有付费客户）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">2</div>
+            <div class="step-text">在 Clay 里选 Sources → Import from HubSpot，选择对应列表</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">3</div>
+            <div class="step-text">建议勾选 <strong>exclude empty properties</strong>，避免导入一堆空列把表格弄乱</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--find-dim);color:var(--find)">4</div>
+            <div class="step-text">导入后数据以 Object 形式折叠在一列里，点击单元格提取你需要的字段（邮箱、姓名等），生成独立的列</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：对老客户做复购营销
+            <span class="usecase-tag" style="background:var(--find-dim);color:var(--find)">客户成功</span>
+          </div>
+          <div class="usecase-body">你从 HubSpot 导出所有<strong>上一季度购买过但 60 天没续费</strong>的客户列表，导入 Clay。然后用 AI 爬取他们公司最近的新闻（有没有融资、有没有扩招），根据最新情况生成个性化的挽回邮件，比泛泛的"我们想了解您的使用情况"邮件精准 10 倍。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== ENRICH ==================== -->
+<div class="section" id="enrich">
+  <div class="section-header">
+    <div class="section-dot" style="background:var(--enrich)"></div>
+    <h2>E · Enrich — 数据增强</h2>
+    <span class="section-meta">3 个功能</span>
+  </div>
+
+  <!-- E1: Waterfalls -->
+  <div class="feature-card" id="e1">
+    <div class="feature-header" onclick="toggle('e1')">
+      <div class="feature-icon" style="background:var(--enrich-dim)">💧</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Waterfalls · 瀑布流多数据源串联</div>
+        <div class="feature-subtitle">Clay 最核心的省钱机制——多个数据商串联查询，找到即停</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">原理（用大白话说）</div>
+        <div class="body-text">想象你要找一本绝版书。你先去最近最便宜的书店找，找到了就结束；找不到再去第二家书店，以此类推。瀑布流就是这个逻辑——把多个数据供应商排成一列，从最便宜的开始查，查到了立刻停止，没查到才流向下一个。这样最贵的供应商只处理最难查的数据，极大地节省费用。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实运行示例：查公司融资阶段</div>
+        <div class="waterfall-visual">
+          <div class="wf-row found">
+            <span class="wf-provider">Intellizence</span>
+            <span class="wf-cost">1 积分/条</span>
+            <div class="wf-result">✓ 查到 3 家 → 停止</div>
+          </div>
+          <div class="wf-row found">
+            <span class="wf-provider">Dealroom</span>
+            <span class="wf-cost">4 积分/条</span>
+            <div class="wf-result">✓ 接手剩余7家 → 查到5家</div>
+          </div>
+          <div class="wf-row found">
+            <span class="wf-provider">Harmonic</span>
+            <span class="wf-cost">4 积分/条</span>
+            <div class="wf-result">✓ 查到1家</div>
+          </div>
+          <div class="wf-row found">
+            <span class="wf-provider">Pitchbook</span>
+            <span class="wf-cost">3 积分/条</span>
+            <div class="wf-result">✓ 查到最后1家</div>
+          </div>
+          <div class="wf-row pass">
+            <span class="wf-provider">Owler</span>
+            <span class="wf-cost">10 积分/条</span>
+            <div class="wf-result">— 一次都没触发</div>
+          </div>
+        </div>
+        <div class="body-text" style="margin-top:10px;font-size:13px;color:var(--muted)">不管从哪个供应商查到，最终结果都汇总在同一列"Funding Stage"里，干净整洁。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">两大额外福利</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--enrich-dim);color:var(--enrich)">福利1</div>
+            <div class="step-text"><strong>找不到就退款</strong>：某个供应商没查到数据，Clay 自动退还该次查询消耗的积分。你只为"真正找到的数据"付钱。</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--enrich-dim);color:var(--enrich)">福利2</div>
+            <div class="step-text"><strong>无需单独购买数据库会员</strong>：Pitchbook、Clearbit 这些数据库单独购买年费可能要数万美金。Clay 已经和他们谈好了合作，你只需要有 Clay 的订阅，就能调用他们的数据。</div>
+          </div>
+        </div>
+      </div>
+      <div class="tip warn">
+        <span class="tip-icon">⚠</span>
+        <span>配置好瀑布流后，<strong>不要直接点"全部运行"</strong>！新手务必先选"Save and run 10 rows"，小批量测试结果是否符合预期，再全量跑。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- E2: Work Email Waterfall -->
+  <div class="feature-card" id="e2">
+    <div class="feature-header" onclick="toggle('e2')">
+      <div class="feature-icon" style="background:var(--enrich-dim)">📧</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Work Email Waterfall · 找真实邮箱</div>
+        <div class="feature-subtitle">用多个供应商串联找工作邮箱，自动验证真伪，找不到退积分</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么</div>
+        <div class="body-text">找到了人，但没有联系方式，等于白找。Work Email Waterfall 会通过多个邮箱数据商，用对方的姓名 + 公司域名 + LinkedIn 链接来推算并验证他的真实工作邮箱，并自动调用 ZeroBounce 等工具验证邮箱是否真实存在。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">最优原材料组合（准确率从高到低）</div>
+        <div class="tags">
+          <span class="tag" style="border-color:var(--enrich);color:var(--enrich)">✓ 最优：姓名 + 域名 + LinkedIn 链接</span>
+          <span class="tag">次优：姓名 + 域名</span>
+          <span class="tag">兜底：仅域名（准确率最低）</span>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">关于 Catch-all 邮箱</div>
+        <div class="body-text">有些公司设置了"Catch-all"——不管发给什么邮箱地址，邮件都会被接收，所以系统无法确认这个地址是否真实存在。如果你非常在意发件域名的安全性（怕触发垃圾邮件过滤），可以关闭 Catch-all 选项，只保留确认存在的邮箱。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">兜底策略：私人邮箱 + 条件运行</div>
+        <div class="body-text" style="margin-bottom:10px">如果工作邮箱死活找不到，可以添加一个"个人邮箱瀑布流"作为兜底。配合 Conditional Runs，设置"仅当工作邮箱列为空时，才查个人邮箱"——这样不浪费积分查那些已有工作邮箱的人。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：给 753 个决策人找邮箱
+            <span class="usecase-tag" style="background:var(--enrich-dim);color:var(--enrich)">Cold Email</span>
+          </div>
+          <div class="usecase-body">你的 753 人名单里只有 LinkedIn 链接，没有邮箱。运行 Work Email Waterfall 后，Clay 依次调用各供应商，最终找到约 <strong>600+ 个</strong>经过验证的工作邮箱（带绿色勾勾标记）。找不到的 150 人继续跑个人邮箱瀑布流兜底，再多覆盖一部分。整个过程全自动，你喝杯咖啡的时间就完成了。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- E3: Enrich Company / Person -->
+  <div class="feature-card" id="e3">
+    <div class="feature-header" onclick="toggle('e3')">
+      <div class="feature-icon" style="background:var(--enrich-dim)">📊</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Enrich Company / Person · 标准数据填充</div>
+        <div class="feature-subtitle">只要有域名或 LinkedIn 链接，一键拉出所有基础字段</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">Jigsaw（拼图）框架 — 数据的先后顺序</div>
+        <div class="body-text" style="margin-bottom:10px">Clay 有一个核心逻辑：找数据就像拼拼图，必须先有"四个角"，才能向外扩展。没有角，什么都拼不了。</div>
+        <table class="compare-table">
+          <tr><th>数据类型</th><th>必须先有（角）</th><th>然后才能得到（边 / 中间）</th></tr>
+          <tr>
+            <td>公司数据</td>
+            <td>公司域名 + LinkedIn 主页链接</td>
+            <td>员工数、行业、融资、地址、技术栈、近期新闻……</td>
+          </tr>
+          <tr>
+            <td>个人数据</td>
+            <td>LinkedIn 主页链接 + 全名</td>
+            <td>职位、简介、教育背景、工作经历、联系方式……</td>
+          </tr>
+        </table>
+      </div>
+      <div class="body-section">
+        <div class="body-label">只有公司名怎么办</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--enrich-dim);color:var(--enrich)">补救</div>
+            <div class="step-text">用 <strong>Google Search 集成</strong>或 <strong>Claygent（AI爬虫）</strong>，输入"公司名称"，让它反向查出该公司的域名和 LinkedIn 主页链接，有了这两个锚点再继续丰富</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== TRANSFORM ==================== -->
+<div class="section" id="transform">
+  <div class="section-header">
+    <div class="section-dot" style="background:var(--transform)"></div>
+    <h2>T · Transform — AI 处理与转化</h2>
+    <span class="section-meta">6 个功能</span>
+  </div>
+
+  <!-- T1: Claygent -->
+  <div class="feature-card" id="t1">
+    <div class="feature-header" onclick="toggle('t1')">
+      <div class="feature-icon" style="background:var(--transform-dim)">🤖</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Claygent · AI 网页爬取代理</div>
+        <div class="feature-subtitle">能上网的 AI 实习生——你问什么，它去网上找什么</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么</div>
+        <div class="body-text">Claygent 是 Clay 最强大的 AI 工具。它把"网页爬虫"和"大语言模型"结合在一起：你给它一个问题，它会自动打开浏览器、搜索网页、阅读内容、提取答案，最后返回结构化数据填进你的表格。任何在互联网上公开存在的信息，它都能找到。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">能问它的问题举例</div>
+        <div class="tags">
+          <span class="tag">这个创始人毕业于哪所大学？</span>
+          <span class="tag">这家公司最近参加了哪些 Webinar？</span>
+          <span class="tag">这家公司的网站最后是什么时候更新的？</span>
+          <span class="tag">这个 CEO 在 Twitter 上最近发了什么内容？</span>
+          <span class="tag">这家公司的年报里提到了什么战略目标？</span>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">模型选择策略（省钱版）</div>
+        <table class="compare-table">
+          <tr><th>模型</th><th>适合场景</th><th>成本</th></tr>
+          <tr><td>Helium（Clay自研）</td><td>简单的数据提取，网页结构清晰</td><td>最低，优先用</td></tr>
+          <tr><td>Neon / Argon</td><td>Helium 抓不准时升级</td><td>中等</td></tr>
+          <tr><td>GPT-4o / Claude Opus</td><td>极复杂推理，长页面深度分析</td><td>最贵，最后用</td></tr>
+        </table>
+      </div>
+      <div class="body-section">
+        <div class="body-label">Column Output Definition — 结构化输出</div>
+        <div class="body-text" style="margin-bottom:10px">Claygent 默认返回一大段文字。但你可以提前定义好"把结果拆分到哪几列"，比如查一家公司的融资情况，让它自动分成四列：</div>
+        <div class="tags">
+          <span class="tag" style="color:var(--transform)">列A：融资阶段</span>
+          <span class="tag" style="color:var(--transform)">列B：融资金额</span>
+          <span class="tag" style="color:var(--transform)">列C：领投机构</span>
+          <span class="tag" style="color:var(--transform)">列D：业务摘要</span>
+        </div>
+        <div class="body-text" style="margin-top:10px">这样抓回来的数据直接是结构化的，可以直接对接 CRM 或邮件发送工具，不用再二次处理。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：为每个决策人生成个性化邮件钩子
+            <span class="usecase-tag" style="background:var(--transform-dim);color:var(--transform)">超级个性化</span>
+          </div>
+          <div class="usecase-body">你让 Claygent 去查每个联系人的 LinkedIn 主页，提取他们最近发布的帖子主题或转发内容。如果对方最近分享了一篇关于"AI 在销售中的应用"的文章，你的邮件破冰句就可以写：<strong>"看到您最近转发了关于 AI 在销售领域应用的内容——我们刚好做了一个案例，帮助一家同类公司用 AI 把响应速度提升了 60%。"</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- T2: SPICE -->
+  <div class="feature-card" id="t2">
+    <div class="feature-header" onclick="toggle('t2')">
+      <div class="feature-icon" style="background:var(--transform-dim)">🌶</div>
+      <div class="feature-title-group">
+        <div class="feature-title">S.P.I.C.E. 框架 · 写出好 Prompt 的模板</div>
+        <div class="feature-subtitle">Clay 官方推出的 Prompt 写作框架，解决"批量跑时 AI 乱写"的问题</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">为什么 Clay 里的 Prompt 不能随便写</div>
+        <div class="body-text">在 ChatGPT 里写的 Prompt，不满意可以让它重新写。但在 Clay 里，一条 Prompt 要同时在 753 个人的数据上运行，没有人工修改的机会。一旦写得不好，753 条结果都是废话。所以需要一个结构化框架，确保第一次就写对。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">S.P.I.C.E. 五个要素</div>
+        <div class="spice-grid">
+          <div class="spice-item">
+            <div class="spice-letter">S</div>
+            <div class="spice-word">Sections · 区块划分</div>
+            <div class="spice-desc">用 # 号分隔不同部分，如 # VARIABLES、# INSTRUCTIONS，让 AI 清楚哪里是指令、哪里是数据</div>
+          </div>
+          <div class="spice-item">
+            <div class="spice-letter">P</div>
+            <div class="spice-word">Prompt Variables · 变量</div>
+            <div class="spice-desc">用 {花括号} 引入表格里的动态数据，如 {full_name}、{company_domain}，每行数据自动替换成对应的值</div>
+          </div>
+          <div class="spice-item">
+            <div class="spice-letter">I</div>
+            <div class="spice-word">Instructions · 明确指令</div>
+            <div class="spice-desc">给出分步骤的、非常具体的操作指南，如"先查有没有获奖，没有再查有没有晋升，还没有就查认证"</div>
+          </div>
+          <div class="spice-item">
+            <div class="spice-letter">C</div>
+            <div class="spice-word">Context · 背景设定</div>
+            <div class="spice-desc">告诉 AI 它现在的身份和场景。绝对不要说"你在写冷邮件"，要说"你是一位极其简洁的文字专家"</div>
+          </div>
+        </div>
+        <div class="spice-item" style="margin-top:10px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+          <div class="spice-letter">E</div>
+          <div class="spice-word">Examples · 示例</div>
+          <div class="spice-desc">提供 1-2 个示例，用 HTML 标签包裹，如 &lt;example&gt;Congrats on joining Stripe as VP Sales&lt;/example&gt;。示例是降低 AI 幻觉最有效的方法。</div>
+        </div>
+      </div>
+      <div class="tip warn">
+        <span class="tip-icon">⚠</span>
+        <span>绝对不要在 Context 里写"你在写一封冷邮件（cold email）"！AI 训练数据里关于冷邮件的内容大多是质量很差的垃圾模板，一旦触发这个关键词，AI 就会写出浓浓推销味的恶心邮件。应该说"你是一个简洁友好的写作专家"。</span>
+      </div>
+      <div class="body-section">
+        <div class="body-label">实际 Prompt 示例（写邮件标题）</div>
+        <div class="email-example">
+          # VARIABLES<br>
+          {full_name} = 联系人姓名<br>
+          {recent_activity} = 对方最近的 LinkedIn 动态<br><br>
+          # CONTEXT<br>
+          你是一位极其擅长用简短、精炼语言写作的文字专家。<br><br>
+          # INSTRUCTIONS<br>
+          1. 检查 {recent_activity}，如果有获奖信息，生成以 "Congrats on" 开头的标题<br>
+          2. 如果没有，检查是否有职位变动，生成祝贺入职/晋升的标题<br>
+          3. 以上都没有，使用技能认证或工作周年<br>
+          标题不超过 10 个词，必须第二人称<br><br>
+          # EXAMPLES<br>
+          &lt;example&gt;Congrats on making President's Club this year&lt;/example&gt;
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- T3: AI Formulas -->
+  <div class="feature-card" id="t3">
+    <div class="feature-header" onclick="toggle('t3')">
+      <div class="feature-icon" style="background:var(--transform-dim)">🔢</div>
+      <div class="feature-title-group">
+        <div class="feature-title">AI Formulas · 大白话写公式，完全免费</div>
+        <div class="feature-subtitle">不用写代码，用自然语言处理数据——抓取、拼接、计数、格式转换都能做</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么</div>
+        <div class="body-text">AI Formulas 是 Clay 内置的一个免费功能，专门用来处理表格数据。不用写 Excel 里那些复杂的嵌套公式，用大白话描述你想做什么，AI 自动帮你生成对应的代码并执行。而且这个功能完全免费，不消耗 Clay 积分。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">能解决的常见问题</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--transform-dim);color:var(--transform)">场景1</div>
+            <div class="step-text"><strong>提取嵌套数组里的数据</strong>：从"教育经历"这一列里，提取"最高学历所在学校名称"。这种数据通常是一个嵌套数组，直接用很麻烦，AI 公式一句话搞定</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--transform-dim);color:var(--transform)">场景2</div>
+            <div class="step-text"><strong>拼接多列数据</strong>：把一个人所有的过往公司名拼成一句话，用于邮件正文里提及对方的经历</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--transform-dim);color:var(--transform)">场景3</div>
+            <div class="step-text"><strong>统计数量</strong>：计算一个人有几段工作经历，用于打分（工作经历越丰富的高管，决策权通常越大）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--transform-dim);color:var(--transform)">场景4</div>
+            <div class="step-text"><strong>格式转换</strong>：把"Apple Inc." → "Apple"，把手机号格式统一，把日期格式转换</div>
+          </div>
+        </div>
+      </div>
+      <div class="tip good">
+        <span class="tip-icon">✓</span>
+        <span>AI Formulas 完全免费，不消耗积分，随便用。这是 Clay 里性价比最高的功能之一。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- T4: Conditional Runs -->
+  <div class="feature-card" id="t4">
+    <div class="feature-header" onclick="toggle('t4')">
+      <div class="feature-icon" style="background:var(--transform-dim)">⚡</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Conditional Runs · 条件触发执行</div>
+        <div class="feature-subtitle">设置"如果……才执行"，让工作流更智能，不乱烧积分</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么</div>
+        <div class="body-text">瀑布流里"找到邮箱就停止"的逻辑，本质就是条件运行。Conditional Runs 允许你对任何动作设置触发条件——只有满足条件时，这个步骤才会执行，不满足就自动跳过。这是控制成本的核心机制。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">配置方法（大白话版）</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--transform-dim);color:var(--transform)">1</div>
+            <div class="step-text">在任意操作的底部，点击 <strong>Run Settings</strong></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--transform-dim);color:var(--transform)">2</div>
+            <div class="step-text">点击 <strong>Use AI</strong>，用大白话输入条件：比如"只有当工作邮箱列为空时，才运行"</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--transform-dim);color:var(--transform)">3</div>
+            <div class="step-text">点击测试生成，AI 自动把你的大白话转成代码条件</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：工作邮箱 → 个人邮箱兜底
+            <span class="usecase-tag" style="background:var(--transform-dim);color:var(--transform)">省积分</span>
+          </div>
+          <div class="usecase-body">你的工作流：先跑工作邮箱瀑布流。然后为个人邮箱瀑布流设置条件：<strong>"仅当验证过的工作邮箱列为空时才运行"</strong>。结果：已经有工作邮箱的 600 人被跳过，只有找不到工作邮箱的 150 人才去找个人邮箱。如果个人邮箱每条查询花 3 个积分，这个条件帮你省下了 600 × 3 = <strong>1800 个积分</strong>。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- T5: AI Snippets -->
+  <div class="feature-card" id="t5">
+    <div class="feature-header" onclick="toggle('t5')">
+      <div class="feature-icon" style="background:var(--transform-dim)">✍️</div>
+      <div class="feature-title-group">
+        <div class="feature-title">AI Snippets · 碎片化写作，而非一键生成全文</div>
+        <div class="feature-subtitle">AI 一次只写一句话，多列拼装，让邮件看起来像真人写的</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">最常见的错误做法</div>
+        <div class="body-text">很多人想让 AI 一次性生成整封邮件。这几乎不可能写好——AI 任务越宽泛，幻觉越严重，写出来的东西假大空、充满推销味。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">正确做法：像顶级 SDR 一样拆分任务</div>
+        <div class="body-text" style="margin-bottom:10px">顶尖的销售代表写邮件从不从零开始——他们有一个固定的价值主张模板，只对以下几个关键位置做个性化：</div>
+        <table class="compare-table">
+          <tr><th>列</th><th>AI 任务</th><th>注意事项</th></tr>
+          <tr><td>列 A</td><td>生成邮件标题（Subject Line）</td><td>用 S.P.I.C.E. 框架写 Prompt</td></tr>
+          <tr><td>列 B</td><td>生成破冰第一句（First Line）</td><td>基于对方最近动态/公司新闻</td></tr>
+          <tr><td>列 C</td><td>生成衔接第二句（Second Line）</td><td>必须把列B的内容喂给 AI 作为上文</td></tr>
+          <tr><td>列 D</td><td>生成 P.S. 附言</td><td>轻松、有趣，提高打开率</td></tr>
+          <tr><td>列 E</td><td>拼装合并所有碎片</td><td>用 AI Formula 把上述列拼成最终文案</td></tr>
+        </table>
+      </div>
+      <div class="body-section">
+        <div class="body-label">最终邮件效果示例</div>
+        <div class="email-example">
+          Subject: <em>Congrats on the Series B, [姓名]</em><br><br>
+          Hi <em>[姓名]</em>,<br><br>
+          <em class="g">看到你们刚完成 B 轮融资</em>，恭喜！通常这个阶段的公司都会面临销售团队快速扩张带来的数据混乱问题。<em class="t">我们帮助了和你们阶段相近的 [案例公司]，3 个月内把数据整理效率提升了 60%。</em><br><br>
+          下周有 15 分钟聊一下吗？<br><br>
+          P.S. <em>我看到你们团队在纽约——我经常去曼哈顿，可以线下见！</em>
+        </div>
+        <div class="body-text" style="margin-top:8px;font-size:12px;color:var(--muted)">蓝色 = AI 个性化部分（Snippets）/ 绿色 = Claygent 抓取的信号 / 橙色 = 固定价值主张模板</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- T6: Lead Scoring + Data Normalization -->
+  <div class="feature-card" id="t6">
+    <div class="feature-header" onclick="toggle('t6')">
+      <div class="feature-icon" style="background:var(--transform-dim)">⭐</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Lead Scoring + Data Normalization · 打分 & 数据清洗</div>
+        <div class="feature-subtitle">对潜在客户打分排序 + 去掉 Inc/LLC 等让邮件看起来像机器人写的后缀</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">Lead Scoring — 是什么</div>
+        <div class="body-text">并非所有潜在客户价值相同。Lead Scoring 让你把名单里的每个人打一个综合分，然后销售团队优先跟进高分客户，不把时间浪费在低转化线索上。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">打分维度示例</div>
+        <table class="score-table">
+          <tr><th>维度</th><th>条件</th><th>分数</th></tr>
+          <tr>
+            <td>公司规模</td>
+            <td>0–500人 / 500–5000人 / 10000人+</td>
+            <td><span class="score-badge score-low">0分</span> / <span class="score-badge score-mid">1分</span> / <span class="score-badge score-high">3分</span></td>
+          </tr>
+          <tr>
+            <td>所在行业</td>
+            <td>其他 / 广告代理 / 软件公司</td>
+            <td><span class="score-badge score-low">0分</span> / <span class="score-badge score-mid">2分</span> / <span class="score-badge score-high">4分</span></td>
+          </tr>
+          <tr>
+            <td>职级</td>
+            <td>普通员工 / 经理 / 总监+ / C-Suite</td>
+            <td><span class="score-badge score-low">0分</span> / <span class="score-badge score-mid">1分</span> / <span class="score-badge score-high">2分</span> / <span class="score-badge score-high">3分</span></td>
+          </tr>
+        </table>
+        <div class="body-text" style="margin-top:8px;font-size:13px;color:var(--muted)">最高可得 10 分。你可以只联系 7 分以上的潜在客户，效率提升数倍。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">Data Normalization — 公司名称清洗</div>
+        <div class="body-text" style="margin-bottom:10px">从数据库抓回来的公司名经常是 "Apple Inc." "Tesla Motors LLC" "Google Holdings Co., Ltd."。如果把这些名字直接放进邮件里，收件人一眼就看出是机器群发的，立刻删除。</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--transform-dim);color:var(--transform)">操作</div>
+            <div class="step-text">Enrichment 面板 → Tools → Normalize → <strong>Normalize company names</strong>，选中公司名列，点运行。"Apple Inc." → <strong>"Apple"</strong>，一键完成，免费。</div>
+          </div>
+        </div>
+        <div class="tip good">
+          <span class="tip-icon">✓</span>
+          <span>Native Tools 里还有很多免费的数据处理工具：从文本提取 URL、对数据计数 / 排名 / 分组，等等。建议新手花 10 分钟探索一下这个区域。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== EXPORT ==================== -->
+<div class="section" id="export">
+  <div class="section-header">
+    <div class="section-dot" style="background:var(--export)"></div>
+    <h2>E · Export — 推送与输出</h2>
+    <span class="section-meta">3 个功能</span>
+  </div>
+
+  <!-- Ex1: Push to CRM -->
+  <div class="feature-card" id="ex1">
+    <div class="feature-header" onclick="toggle('ex1')">
+      <div class="feature-icon" style="background:var(--export-dim)">🏦</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Push to CRM · 推送到客户管理系统</div>
+        <div class="feature-subtitle">两步验证法，先查重再新建，避免 CRM 变垃圾场</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">最常见的灾难性错误</div>
+        <div class="body-text">新手会直接把 Clay 表格里的所有人一键推送到 HubSpot/Salesforce，创建新联系人。结果：同一个人出现了 3 条重复记录，销售团队不知道该用哪条，给同一个客户发了 2 封相同的邮件，显得极其不专业，甚至被拉黑。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">正确方法：两步验证法</div>
+        <div class="two-step">
+          <div class="two-step-box">
+            <div class="step-label">步骤 A</div>
+            <div class="step-title">先查：这个人已经在 CRM 里了吗？</div>
+            <div class="step-body">用工作邮箱在 CRM 里搜索对方。邮箱是每个人唯一的标识符。这一步得到结果：已存在 / 不存在。</div>
+          </div>
+          <div class="two-step-arrow">→</div>
+          <div class="two-step-box">
+            <div class="step-label">步骤 B（条件触发）</div>
+            <div class="step-title">仅当"不存在"时，才新建联系人</div>
+            <div class="step-body">如果步骤 A 发现此人已在 CRM，跳过。只有全新联系人才触发"Create Contact"操作。</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：每周自动同步新线索到 HubSpot
+            <span class="usecase-tag" style="background:var(--export-dim);color:var(--export)">数据卫生</span>
+          </div>
+          <div class="usecase-body">你每周用 Clay 找 200 个新联系人，用两步验证法推送到 HubSpot。其中 50 人已经在 HubSpot 里（之前已经联系过），自动跳过。<strong>只有 150 个真正新的联系人</strong>被创建，CRM 保持干净，销售团队的工作效率也大幅提升。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ex2: Push to Email Sequencer -->
+  <div class="feature-card" id="ex2">
+    <div class="feature-header" onclick="toggle('ex2')">
+      <div class="feature-icon" style="background:var(--export-dim)">📨</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Push to Email Tool · 推送到发信工具</div>
+        <div class="feature-subtitle">把 Clay 生成的所有个性化数据和文案，一键同步到 Instantly / Smartlead</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">支持的发信工具</div>
+        <div class="tags">
+          <span class="tag">Instantly</span>
+          <span class="tag">Smartlead</span>
+          <span class="tag">Outreach</span>
+          <span class="tag">Salesloft</span>
+          <span class="tag">Lemlist</span>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">配置步骤（以 Instantly 为例）</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">1</div>
+            <div class="step-text">先在 Instantly 里创建一个空的 Campaign（不要在里面手动加人）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">2</div>
+            <div class="step-text">在 Clay 的右侧面板搜索 "Add lead to campaign"，选择 Instantly，连接 API Key</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">3</div>
+            <div class="step-text">选择目标 Campaign，开启 <strong>Skip if Lead is in Workspace</strong>（防止重复发送）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">4</div>
+            <div class="step-text">映射字段：Email → 工作邮箱列，First Name → 名字列，再把 AI 生成的邮件标题列、破冰句列添加为 <strong>Custom Variables</strong></div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">5</div>
+            <div class="step-text">点击 Save and run，Clay 自动把所有数据推送到 Instantly，在 Campaign 页面刷新即可看到联系人</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：完全自动化的个性化邮件序列
+            <span class="usecase-tag" style="background:var(--export-dim);color:var(--export)">全自动 OutBound</span>
+          </div>
+          <div class="usecase-body">你在 Clay 里用 AI 生成了 3 封邮件序列的所有个性化内容：邮件1标题、邮件1正文、邮件2标题（Follow-up）、邮件2正文……把这些全部映射为 Custom Variables 推送到 Instantly。在 Instantly 里，你用 {SubjectLine1}、{EmailBody1}、{SubjectLine2} 等变量引用这些内容。结果：<strong>每个联系人收到的每一封邮件都是完全个性化的</strong>，但全程零人工操作。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ex3: Download CSV -->
+  <div class="feature-card" id="ex3">
+    <div class="feature-header" onclick="toggle('ex3')">
+      <div class="feature-icon" style="background:var(--export-dim)">💾</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Download CSV · 导出为表格文件</div>
+        <div class="feature-subtitle">当没有原生集成，或者需要人工审查数据时，用 CSV 中转</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">什么时候用 CSV 导出</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">1</div>
+            <div class="step-text"><strong>需要人工审查</strong>：在推送之前，想用眼睛看一遍数据质量，筛掉明显有问题的行</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">2</div>
+            <div class="step-text"><strong>目标工具没有原生集成</strong>：Clay 没有直接连到你用的工具，用 CSV 手动上传</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">3</div>
+            <div class="step-text"><strong>交给团队</strong>：把处理好的数据交给不用 Clay 的同事，他们在 Excel / Google Sheets 里继续处理</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">导出前的最佳实践</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--export-dim);color:var(--export)">✓</div>
+            <div class="step-text">复制当前视图，命名为 "CSV Export View"，在这个视图里<strong>隐藏所有中间步骤列</strong>（验证列、状态列、中间数据列），只留下你真正需要的列，再导出</div>
+          </div>
+        </div>
+      </div>
+      <div class="tip info">
+        <span class="tip-icon">ℹ</span>
+        <span>导出的内容是你当前视图里看到的内容（所见即所得）。Object 类型的列（比如从 HubSpot 导入的折叠数据）无法直接导出文本值，需要先提取成独立列。</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== INFRA ==================== -->
+<div class="section" id="infra">
+  <div class="section-header">
+    <div class="section-dot" style="background:var(--infra)"></div>
+    <h2>基础设施 — 平台底层能力</h2>
+    <span class="section-meta">3 个功能</span>
+  </div>
+
+  <!-- I1: Write to Table -->
+  <div class="feature-card" id="i1">
+    <div class="feature-header" onclick="toggle('i1')">
+      <div class="feature-icon" style="background:var(--infra-dim)">🔗</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Write to Table · 跨表数据流转</div>
+        <div class="feature-subtitle">把嵌套在一个格子里的多条数据，展开到新表格，实现跨表联动</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">用大白话解释</div>
+        <div class="body-text">你用 Lookalikes 功能，给 162 家公司各找了 10 家相似公司。结果是：每个格子里塞了 10 家公司的数据——162 个格子，每个格子里有 10 家。这 1620 家公司没法直接用。Write to Table 就是把每个格子里的 10 家公司"展开"，让每家公司独占一行，写进新的表格里。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">4 个配置步骤</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">1</div>
+            <div class="step-text"><strong>选择目标表格</strong>：新建表格，还是写入已有表格。通常选新建，保持数据清晰。</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">2</div>
+            <div class="step-text"><strong>选择要展开的列表</strong>：选择那个带有"数字+大括号"图标的列（说明里面有多条数据），如"Lookalike Companies"列。</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">3</div>
+            <div class="step-text"><strong>提取具体字段</strong>：告诉 Clay 你要把嵌套数据里的哪些字段变成新表格的列，如公司名、域名、员工数、行业。</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">4</div>
+            <div class="step-text"><strong>保留来源标记</strong>：勾选"Add other data from this table"，把原始公司名也带过去，方便知道"这家新公司是因为哪家老客户找出来的"。</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">隐式使用场景</div>
+        <div class="body-text">你在公司表里点击"Find People at these companies"，系统其实就是在后台自动跑了一个 Write to Table，把每家公司找到的多个人展开成独立的行，写进了人员表。两张表通过 Lookup 列自动保持同步。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- I2: HTTP API -->
+  <div class="feature-card" id="i2">
+    <div class="feature-header" onclick="toggle('i2')">
+      <div class="feature-icon" style="background:var(--infra-dim)">🔌</div>
+      <div class="feature-title-group">
+        <div class="feature-title">HTTP API · 接入任意第三方工具</div>
+        <div class="feature-subtitle">Clay 没有原生集成的工具，只要有 API 就能接进来</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">是什么</div>
+        <div class="body-text">API 是互联网上软件之间对话的语言。只要一个工具提供了开放 API（绝大多数 SaaS 工具都提供），你就可以在 Clay 里通过 HTTP API 功能把它接进来，不需要懂代码，不需要复杂认证，通常只需要粘贴一个 API Key。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">两种请求类型</div>
+        <table class="compare-table">
+          <tr><th>类型</th><th>作用</th><th>示例</th></tr>
+          <tr><td>GET 请求</td><td>从外部系统"拿"数据</td><td>从 Yelp 获取某个地址附近评分最高的餐厅列表</td></tr>
+          <tr><td>POST 请求</td><td>向外部系统"发送"数据并触发操作</td><td>把图片 ID 和文字发给 Imgflip，生成一张定制梗图，返回图片链接</td></tr>
+        </table>
+      </div>
+      <div class="body-section">
+        <div class="body-label">降低门槛的 3 个辅助功能</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">1</div>
+            <div class="step-text"><strong>预设模板</strong>：Clay 提供了常用 API 的配置模板，直接套用</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">2</div>
+            <div class="step-text"><strong>AI 辅助配置</strong>：把 API 文档的网址扔给 Clay，内置 AI 自动帮你读文档、填好参数</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">3</div>
+            <div class="step-text"><strong>可复用配置</strong>：配置好一个 API 之后，保存为个人模板，在任何其他工作簿里一键复用</div>
+          </div>
+        </div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">真实使用场景</div>
+        <div class="usecase">
+          <div class="usecase-title">场景：在开发信里插入对方公司附近的餐厅推荐
+            <span class="usecase-tag" style="background:var(--infra-dim);color:var(--infra)">超级个性化</span>
+          </div>
+          <div class="usecase-body">你卖商业地产服务，目标客户是纽约的企业。你用 Yelp API（GET 请求），把每家目标公司的办公地址传进去，让 Yelp 返回该地址附近评分最高的晚餐餐厅。然后邮件里写：<strong>"Hi [姓名]，下周我刚好去你们办公室附近的 [Yelp 返回的餐厅名] 吃饭，有空一起聊聊贵公司的商业地产需求吗？"</strong>——这封邮件的回复率远超任何泛泛的推销。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- I3: Workbook / Table -->
+  <div class="feature-card" id="i3">
+    <div class="feature-header" onclick="toggle('i3')">
+      <div class="feature-icon" style="background:var(--infra-dim)">📋</div>
+      <div class="feature-title-group">
+        <div class="feature-title">Workbook & Table · 数据组织结构</div>
+        <div class="feature-subtitle">先建 Workbook（工作簿），再在里面建多张 Table（表格）</div>
+      </div>
+      <div class="feature-arrow">›</div>
+    </div>
+    <div class="feature-body">
+      <div class="body-section">
+        <div class="body-label">关系类比</div>
+        <div class="body-text">Workbook 就像 Excel 文件，Table 就像 Excel 里的多个工作表。一个 Workbook 里可以有多张 Table，这些 Table 之间可以通过 Lookup 列互相关联，数据自动同步。</div>
+      </div>
+      <div class="body-section">
+        <div class="body-label">标准的三表结构（最佳实践）</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">表1</div>
+            <div class="step-text"><strong>Companies Table</strong>：存放所有目标公司及其数据（行业、规模、融资阶段、技术栈……）</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">表2</div>
+            <div class="step-text"><strong>People Table</strong>：存放从这些公司里找出的决策人（自动与公司表联动），含邮箱、职位、个性化文案</div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--infra-dim);color:var(--infra)">表3</div>
+            <div class="step-text"><strong>Lookalikes Table</strong>（可选）：从现有客户扩展出来的相似公司名单</div>
+          </div>
+        </div>
+      </div>
+      <div class="tip good">
+        <span class="tip-icon">✓</span>
+        <span>永远<strong>先建 Workbook 再建 Table</strong>，不要直接建孤立的 Table。Workbook 让多表之间的关联和管理变得清晰，尤其当工作流变得复杂时，你会感谢这个习惯。</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<div class="doc-footer">
+  <span>基于 Clay 101 官方课程整理 · 共 18 个功能模块</span>
+  <span>点击任意功能卡片展开详情</span>
+</div>
+
+<script>
+function toggle(id) {
+  const card = document.getElementById(id);
+  card.classList.toggle('open');
+}
+
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>
